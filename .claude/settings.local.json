@@ -1,9 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Read(//c/Users/renat/.claude/plugins//**)",
-      "Read(//c/Users/renat/.claude/plugins/**)",
-      "Read(//c/Users/renat/.claude/**)"
+      "Read(//c/Users/User/.claude/plugins//**)",
+      "Read(//c/Users/User/.claude/plugins/**)",
+      "Read(//c/Users/User/.claude/**)"
     ]
   },
   "outputStyle": "default"

@@ -1,0 +1,26 @@
+squad:
+  code: roteiros-solar
+  name: "Squad de Roteiros | PachecoSolar"
+  description: >
+    Squad especializado em produzir roteiros de vídeo para Instagram Reels e Anúncios (Meta Ads)
+    da PachecoSolar, voltados para integradores e instaladores de energia solar.
+    Usa frameworks de copywriting (PAS, AIDA, BAB, 4Ps) e as melhores práticas
+    de Reels para criar roteiros que param o scroll, geram leads e vendem.
+  version: "1.0.0"
+  created: "2026-03-24"
+  language: "pt-BR"
+
+pipeline:
+  steps:
+    - id: checkpoint-briefing
+      file: checkpoint-briefing.md
+    - id: strategist
+      file: strategist.md
+    - id: checkpoint-hook
+      file: checkpoint-hook.md
+    - id: scriptwriter
+      file: scriptwriter.md
+    - id: checkpoint-approval
+      file: checkpoint-approval.md
+    - id: reviewer
+      file: reviewer.md

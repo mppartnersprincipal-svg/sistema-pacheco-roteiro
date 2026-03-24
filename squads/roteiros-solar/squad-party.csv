@@ -1,0 +1,4 @@
+displayName,icon,path,role
+Estrategista,🎯,./agents/strategist/strategist.agent.md,Define o ângulo estratégico e os ganchos do roteiro
+Roteirista,✍️,./agents/scriptwriter/scriptwriter.agent.md,Escreve o roteiro completo para Reels e Anúncios
+Revisor,🔍,./agents/reviewer/reviewer.agent.md,Revisa qualidade e cria variante A/B melhorada
