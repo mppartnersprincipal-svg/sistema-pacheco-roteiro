@@ -2,10 +2,12 @@ squad:
   code: roteiros-solar
   name: "Squad de Roteiros | PachecoSolar"
   description: >
-    Squad especializado em produzir roteiros de vídeo para Instagram Reels e Anúncios (Meta Ads)
-    da PachecoSolar, voltados para integradores e instaladores de energia solar.
-    Usa frameworks de copywriting (PAS, AIDA, BAB, 4Ps) e as melhores práticas
-    de Reels para criar roteiros que param o scroll, geram leads e vendem.
+    Squad especializado em produzir roteiros de vídeo para a PachecoSolar,
+    voltados para integradores e instaladores de energia solar.
+    Suporta três tipos de conteúdo: Reels de Valor (educativo/orgânico),
+    Reels Institucionais (marca e cultura) e Anúncios Meta Ads (conversão).
+    Cada tipo tem estrutura, tom e CTA próprios — o agente escolhe o framework correto
+    para cada objetivo: engajamento, autoridade ou geração de leads.
   version: "1.0.0"
   created: "2026-03-24"
   language: "pt-BR"

@@ -27,7 +27,11 @@ Leia o arquivo de briefing: `inputFile`
 
 ## Veto Conditions
 
-- Brief sem identificação de nível de consciência → reescrever
+- Tipo de conteúdo não identificado (Anúncio / Reel de Valor / Reel Institucional) → definir antes de qualquer outra coisa
+- Anúncio sem identificação de nível de consciência → reescrever
+- Reel de Valor com framework de anúncio (PAS/BAB/urgência) → corrigir para Hook→Valor→CTA
+- Reel de Valor com produto mencionado nos primeiros 3s dos ganchos → reescrever hooks
 - Menos de 3 opções de gancho → completar
 - 3 ganchos com o mesmo driver psicológico → diversificar
+- CTA de conversão ("Fale no WhatsApp") em Reel de Valor → substituir por CTA de engajamento
 - Dados inventados não presentes no company.md → remover ou substituir
