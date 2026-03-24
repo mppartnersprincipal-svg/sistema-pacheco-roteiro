@@ -21,6 +21,7 @@ Escrever o roteiro completo usando o gancho escolhido pelo usuário e o brief es
 - Perfil da empresa: `_opensquad/_memory/company.md`
 - Roteiros de referência: `_opensquad/_memory/Roteiros.pdf` (use como referência de tom e estilo)
 - Cronograma aprovado (Março 2026): `_opensquad/_memory/CRONOGRAMA_PACHECO_SOLAR_MARCO_2026_FINAL.pdf` (roteiros reais aprovados pelo cliente — use como balizador de estrutura, tom e padrão de qualidade)
+- Biblioteca de aprovados: `_opensquad/_memory/roteiros-aprovados.md` (roteiros gerados e aprovados pelo usuário em sessões anteriores — priorize esses padrões, pois representam o que já funcionou na prática)
 
 ## Instruções
 

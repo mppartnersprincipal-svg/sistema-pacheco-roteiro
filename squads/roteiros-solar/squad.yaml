@@ -26,3 +26,5 @@ pipeline:
       file: checkpoint-approval.md
     - id: reviewer
       file: reviewer.md
+    - id: save-approved
+      file: save-approved.md
