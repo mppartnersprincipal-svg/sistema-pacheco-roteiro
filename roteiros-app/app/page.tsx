@@ -89,6 +89,7 @@ function MainApp() {
   const [script, setScript] = useState<Script | null>(null)
   const [review, setReview] = useState<Review | null>(null)
   const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null)
+  const [currentScriptDbId, setCurrentScriptDbId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [loadingMsg, setLoadingMsg] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -107,6 +108,7 @@ function MainApp() {
       setScript(data.script)
       setReview(data.review)
       setSelectedHistoryId(id)
+      setCurrentScriptDbId(id)
       setStep('review')
     }
     setLoading(false)
@@ -179,7 +181,7 @@ function MainApp() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        await supabase.from('scripts').insert({
+        const { data: inserted } = await supabase.from('scripts').insert({
           user_id: user.id,
           tema: briefing!.tema,
           formato: briefing!.formato,
@@ -191,7 +193,8 @@ function MainApp() {
           script,
           review: json.data,
           status: 'completed',
-        })
+        }).select('id').single()
+        if (inserted) setCurrentScriptDbId(inserted.id)
       }
 
       setStep('review')
@@ -211,6 +214,7 @@ function MainApp() {
     setReview(null)
     setError(null)
     setSelectedHistoryId(null)
+    setCurrentScriptDbId(null)
     router.push('/')
   }
 
@@ -295,7 +299,7 @@ function MainApp() {
             <ScriptViewer script={script} chosenHook={chosenHook} onApprove={handleApproveScript} onBack={() => setStep('hooks')} />
           )}
           {step === 'review' && review && script && (
-            <ReviewPanel review={review} script={script} onNewScript={handleReset} />
+            <ReviewPanel review={review} script={script} scriptId={currentScriptDbId} onNewScript={handleReset} />
           )}
         </main>
       </div>

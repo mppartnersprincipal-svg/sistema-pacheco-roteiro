@@ -3,10 +3,12 @@
 import { useState } from 'react'
 import type { Review, Script } from '@/app/page'
 import { downloadScriptPDF } from '@/lib/pdf'
+import { createClient } from '@/lib/supabase/client'
 
 interface Props {
   review: Review
   script: Script
+  scriptId?: string | null
   onNewScript: () => void
 }
 
@@ -37,10 +39,21 @@ const CHECKLIST_LABELS: Record<string, string> = {
   legendaHook125: 'Legenda com hook nos 125 chars',
 }
 
-export default function ReviewPanel({ review, script, onNewScript }: Props) {
+export default function ReviewPanel({ review, script, scriptId, onNewScript }: Props) {
   const [copiedAB, setCopiedAB] = useState(false)
   const [activeTab, setActiveTab] = useState<'review' | 'ab'>('review')
   const [downloading, setDownloading] = useState(false)
+  const [approved, setApproved] = useState(false)
+  const [approving, setApproving] = useState(false)
+
+  async function handleMarkApproved() {
+    if (!scriptId || approved) return
+    setApproving(true)
+    const supabase = createClient()
+    await supabase.from('scripts').update({ approved: true }).eq('id', scriptId)
+    setApproved(true)
+    setApproving(false)
+  }
 
   async function handlePDF() {
     setDownloading(true)
@@ -170,9 +183,22 @@ export default function ReviewPanel({ review, script, onNewScript }: Props) {
         </div>
       )}
 
-      <div className="flex gap-3 pt-2">
+      <div className="flex flex-col gap-3 pt-2">
+        {scriptId && (
+          <button
+            onClick={handleMarkApproved}
+            disabled={approved || approving}
+            className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold border transition-all ${
+              approved
+                ? 'bg-green-900/30 border-green-700/50 text-green-400 cursor-default'
+                : 'border-green-700/50 text-green-400 hover:bg-green-900/30 disabled:opacity-50'
+            }`}
+          >
+            {approved ? '✓ Salvo nos Aprovados' : approving ? 'Salvando...' : '⭐ Salvar nos Aprovados'}
+          </button>
+        )}
         <button onClick={onNewScript}
-          className="flex-1 bg-solar-orange hover:bg-orange-500 text-white font-semibold py-3 rounded-xl text-sm transition-colors">
+          className="w-full bg-solar-orange hover:bg-orange-500 text-white font-semibold py-3 rounded-xl text-sm transition-colors">
           + Gerar novo roteiro
         </button>
       </div>

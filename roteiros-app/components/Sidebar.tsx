@@ -10,6 +10,7 @@ interface HistoryItem {
   formato: 'reel' | 'anuncio'
   framework: string
   created_at: string
+  approved?: boolean
 }
 
 interface Props {
@@ -29,6 +30,8 @@ function relativeDate(iso: string) {
 
 export default function Sidebar({ onSelectScript, selectedId, onNewScript }: Props) {
   const [history, setHistory] = useState<HistoryItem[]>([])
+  const [approved, setApproved] = useState<HistoryItem[]>([])
+  const [activeTab, setActiveTab] = useState<'historico' | 'aprovados'>('historico')
   const [userEmail, setUserEmail] = useState('')
   const [loading, setLoading] = useState(true)
   const router = useRouter()
@@ -36,6 +39,7 @@ export default function Sidebar({ onSelectScript, selectedId, onNewScript }: Pro
 
   useEffect(() => {
     fetchHistory()
+    fetchApproved()
     fetchUser()
   }, [])
 
@@ -48,12 +52,26 @@ export default function Sidebar({ onSelectScript, selectedId, onNewScript }: Pro
     setLoading(true)
     const { data } = await supabase
       .from('scripts')
-      .select('id, tema, formato, framework, created_at')
+      .select('id, tema, formato, framework, created_at, approved')
       .eq('status', 'completed')
       .order('created_at', { ascending: false })
       .limit(50)
     setHistory(data ?? [])
     setLoading(false)
+  }
+
+  async function fetchApproved() {
+    const { data } = await supabase
+      .from('scripts')
+      .select('id, tema, formato, framework, created_at, approved')
+      .eq('status', 'completed')
+      .eq('approved', true)
+      .order('created_at', { ascending: false })
+    setApproved(data ?? [])
+  }
+
+  async function handleRefresh() {
+    await Promise.all([fetchHistory(), fetchApproved()])
   }
 
   async function handleLogout() {
@@ -62,13 +80,49 @@ export default function Sidebar({ onSelectScript, selectedId, onNewScript }: Pro
     router.refresh()
   }
 
-  // Group history by date label
-  const grouped: Record<string, HistoryItem[]> = {}
-  history.forEach(item => {
-    const label = relativeDate(item.created_at)
-    if (!grouped[label]) grouped[label] = []
-    grouped[label].push(item)
-  })
+  // Group by date label
+  function groupByDate(items: HistoryItem[]) {
+    const grouped: Record<string, HistoryItem[]> = {}
+    items.forEach(item => {
+      const label = relativeDate(item.created_at)
+      if (!grouped[label]) grouped[label] = []
+      grouped[label].push(item)
+    })
+    return grouped
+  }
+
+  function ScriptButton({ item }: { item: HistoryItem }) {
+    return (
+      <button
+        onClick={() => onSelectScript(item.id)}
+        className={`w-full text-left px-3 py-2.5 rounded-xl transition-all group ${
+          selectedId === item.id
+            ? 'bg-solar-orange/15 border border-solar-orange/30'
+            : 'hover:bg-solar-dark/60 border border-transparent'
+        }`}
+      >
+        <div className="flex items-start gap-1.5">
+          {item.approved && <span className="text-yellow-400 text-xs mt-0.5 shrink-0">⭐</span>}
+          <div className="text-xs text-white font-medium truncate leading-snug mb-1 min-w-0">
+            {item.tema}
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+            item.formato === 'reel'
+              ? 'bg-blue-900/40 text-blue-400'
+              : 'bg-orange-900/40 text-orange-400'
+          }`}>
+            {item.formato === 'reel' ? '📱 Reel' : '🎯 Anúncio'}
+          </span>
+          <span className="text-xs text-solar-muted">{item.framework}</span>
+        </div>
+      </button>
+    )
+  }
+
+  const historyGrouped = groupByDate(history)
+  const approvedGrouped = groupByDate(approved)
 
   return (
     <aside className="flex flex-col h-full bg-solar-card border-r border-solar-border w-64 shrink-0">
@@ -89,61 +143,90 @@ export default function Sidebar({ onSelectScript, selectedId, onNewScript }: Pro
         </button>
       </div>
 
-      {/* History */}
+      {/* Tabs */}
+      <div className="flex border-b border-solar-border shrink-0">
+        <button
+          onClick={() => setActiveTab('historico')}
+          className={`flex-1 py-2.5 text-xs font-semibold transition-colors border-b-2 -mb-px ${
+            activeTab === 'historico'
+              ? 'border-solar-orange text-solar-orange'
+              : 'border-transparent text-solar-muted hover:text-white'
+          }`}
+        >
+          🕐 Histórico
+        </button>
+        <button
+          onClick={() => setActiveTab('aprovados')}
+          className={`flex-1 py-2.5 text-xs font-semibold transition-colors border-b-2 -mb-px relative ${
+            activeTab === 'aprovados'
+              ? 'border-yellow-400 text-yellow-400'
+              : 'border-transparent text-solar-muted hover:text-white'
+          }`}
+        >
+          ⭐ Aprovados
+          {approved.length > 0 && (
+            <span className="absolute top-1.5 right-3 bg-yellow-500 text-black text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold leading-none">
+              {approved.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Content */}
       <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-hide">
-        {loading ? (
-          <div className="space-y-2 pt-2">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-14 bg-solar-dark/50 rounded-xl animate-pulse" />
-            ))}
-          </div>
-        ) : history.length === 0 ? (
-          <div className="text-center py-8 text-solar-muted text-xs px-2">
-            Nenhum roteiro gerado ainda.<br />Clique em "Novo roteiro" para começar.
-          </div>
-        ) : (
-          Object.entries(grouped).map(([dateLabel, items]) => (
-            <div key={dateLabel}>
-              <div className="text-xs font-medium text-solar-muted px-2 mb-1.5">{dateLabel}</div>
-              <div className="space-y-1">
-                {items.map(item => (
-                  <button
-                    key={item.id}
-                    onClick={() => onSelectScript(item.id)}
-                    className={`w-full text-left px-3 py-2.5 rounded-xl transition-all group ${
-                      selectedId === item.id
-                        ? 'bg-solar-orange/15 border border-solar-orange/30'
-                        : 'hover:bg-solar-dark/60 border border-transparent'
-                    }`}
-                  >
-                    <div className="text-xs text-white font-medium truncate leading-snug mb-1">
-                      {item.tema}
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                        item.formato === 'reel'
-                          ? 'bg-blue-900/40 text-blue-400'
-                          : 'bg-orange-900/40 text-orange-400'
-                      }`}>
-                        {item.formato === 'reel' ? '📱 Reel' : '🎯 Anúncio'}
-                      </span>
-                      <span className="text-xs text-solar-muted">{item.framework}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
+
+        {/* HISTÓRICO */}
+        {activeTab === 'historico' && (
+          loading ? (
+            <div className="space-y-2 pt-2">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-14 bg-solar-dark/50 rounded-xl animate-pulse" />
+              ))}
             </div>
-          ))
+          ) : history.length === 0 ? (
+            <div className="text-center py-8 text-solar-muted text-xs px-2">
+              Nenhum roteiro gerado ainda.<br />Clique em "Novo roteiro" para começar.
+            </div>
+          ) : (
+            Object.entries(historyGrouped).map(([dateLabel, items]) => (
+              <div key={dateLabel}>
+                <div className="text-xs font-medium text-solar-muted px-2 mb-1.5">{dateLabel}</div>
+                <div className="space-y-1">
+                  {items.map(item => <ScriptButton key={item.id} item={item} />)}
+                </div>
+              </div>
+            ))
+          )
+        )}
+
+        {/* APROVADOS */}
+        {activeTab === 'aprovados' && (
+          approved.length === 0 ? (
+            <div className="text-center py-8 text-solar-muted text-xs px-2">
+              Nenhum roteiro aprovado ainda.<br />
+              Após gerar um roteiro, clique em<br />
+              <span className="text-yellow-400 font-medium">⭐ Salvar nos Aprovados</span>.
+            </div>
+          ) : (
+            Object.entries(approvedGrouped).map(([dateLabel, items]) => (
+              <div key={dateLabel}>
+                <div className="text-xs font-medium text-solar-muted px-2 mb-1.5">{dateLabel}</div>
+                <div className="space-y-1">
+                  {items.map(item => <ScriptButton key={item.id} item={item} />)}
+                </div>
+              </div>
+            ))
+          )
         )}
       </div>
 
       {/* Footer */}
       <div className="p-3 border-t border-solar-border space-y-1">
         <button
-          onClick={fetchHistory}
+          onClick={handleRefresh}
           className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-solar-muted hover:text-white hover:bg-solar-dark/60 transition-all"
         >
-          <span>↻</span> Atualizar histórico
+          <span>↻</span> Atualizar
         </button>
         <div className="px-3 py-2 text-xs text-solar-muted truncate">{userEmail}</div>
         <button
