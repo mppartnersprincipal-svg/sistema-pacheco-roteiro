@@ -184,19 +184,17 @@ export default function ReviewPanel({ review, script, scriptId, onNewScript }: P
       )}
 
       <div className="flex flex-col gap-3 pt-2">
-        {scriptId && (
-          <button
-            onClick={handleMarkApproved}
-            disabled={approved || approving}
-            className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold border transition-all ${
-              approved
-                ? 'bg-green-900/30 border-green-700/50 text-green-400 cursor-default'
-                : 'border-green-700/50 text-green-400 hover:bg-green-900/30 disabled:opacity-50'
-            }`}
-          >
-            {approved ? '✓ Salvo nos Aprovados' : approving ? 'Salvando...' : '⭐ Salvar nos Aprovados'}
-          </button>
-        )}
+        <button
+          onClick={handleMarkApproved}
+          disabled={!scriptId || approved || approving}
+          className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all ${
+            approved
+              ? 'bg-green-700/30 border border-green-600/50 text-green-400 cursor-default'
+              : 'bg-green-600 hover:bg-green-500 text-white disabled:opacity-40 disabled:cursor-not-allowed'
+          }`}
+        >
+          {approved ? '✓ Roteiro Aprovado' : approving ? 'Aprovando...' : '✓ Aprovar Roteiro'}
+        </button>
         <button onClick={onNewScript}
           className="w-full bg-solar-orange hover:bg-orange-500 text-white font-semibold py-3 rounded-xl text-sm transition-colors">
           + Gerar novo roteiro

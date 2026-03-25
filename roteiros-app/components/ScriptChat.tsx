@@ -70,10 +70,21 @@ export default function ScriptChat({
         >
           ← Voltar ao roteiro
         </button>
-        <h2 className="text-2xl font-bold text-white mb-1">Refinar com IA</h2>
-        <p className="text-solar-muted text-sm">
-          Peça ajustes, melhorias ou mudanças. O roteiro será atualizado em tempo real.
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-1">Refinar com IA</h2>
+            <p className="text-solar-muted text-sm">
+              Peça ajustes, melhorias ou mudanças. O roteiro será atualizado em tempo real.
+            </p>
+          </div>
+          <button
+            onClick={onApprove}
+            disabled={loading}
+            className="shrink-0 bg-solar-orange hover:bg-orange-500 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-colors disabled:opacity-50"
+          >
+            Aprovar →
+          </button>
+        </div>
       </div>
 
       {/* Roteiro colapsável */}
