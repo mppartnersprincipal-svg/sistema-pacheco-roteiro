@@ -7,6 +7,7 @@ import { downloadScriptPDF } from '@/lib/pdf'
 interface Props {
   script: Script
   chosenHook: Hook
+  onEnterChat: () => void
   onApprove: () => void
   onBack: () => void
 }
@@ -19,7 +20,7 @@ const SECTION_COLORS: Record<string, string> = {
   BODY: 'text-purple-400 border-purple-400/30 bg-purple-400/5',
 }
 
-export default function ScriptViewer({ script, chosenHook, onApprove, onBack }: Props) {
+export default function ScriptViewer({ script, chosenHook, onEnterChat, onApprove, onBack }: Props) {
   const [copied, setCopied] = useState(false)
   const [downloading, setDownloading] = useState(false)
 
@@ -161,15 +162,27 @@ export default function ScriptViewer({ script, chosenHook, onApprove, onBack }: 
       )}
 
       {/* Actions */}
-      <div className="flex gap-3 pt-2">
-        <button onClick={onBack}
-          className="flex-1 border border-solar-border text-solar-muted hover:text-white hover:border-slate-500 py-3 rounded-xl text-sm font-medium transition-all">
-          ← Trocar gancho
+      <div className="space-y-3 pt-2">
+        <button
+          onClick={onEnterChat}
+          className="w-full bg-solar-orange hover:bg-orange-500 text-white font-semibold py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+        >
+          💬 Refinar com IA →
         </button>
-        <button onClick={onApprove}
-          className="flex-1 bg-solar-orange hover:bg-orange-500 text-white font-semibold py-3 rounded-xl text-sm transition-colors">
-          Aprovar → Revisar
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={onBack}
+            className="flex-1 border border-solar-border text-solar-muted hover:text-white hover:border-slate-500 py-2.5 rounded-xl text-sm font-medium transition-all"
+          >
+            ← Trocar gancho
+          </button>
+          <button
+            onClick={onApprove}
+            className="flex-1 border border-solar-border text-slate-400 hover:text-white hover:border-slate-500 py-2.5 rounded-xl text-sm font-medium transition-all"
+          >
+            Aprovar direto →
+          </button>
+        </div>
       </div>
     </div>
   )

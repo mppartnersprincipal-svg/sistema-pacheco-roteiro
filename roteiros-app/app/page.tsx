@@ -8,6 +8,7 @@ import Sidebar from '@/components/Sidebar'
 import BriefingForm from '@/components/BriefingForm'
 import HookSelector from '@/components/HookSelector'
 import ScriptViewer from '@/components/ScriptViewer'
+import ScriptChat from '@/components/ScriptChat'
 import ReviewPanel from '@/components/ReviewPanel'
 
 export type Formato = 'reel-valor' | 'reel-institucional' | 'anuncio'
@@ -62,6 +63,12 @@ export interface Script {
   copyDoAnuncio?: { headline: string; body: string; cta: string }
 }
 
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+  scriptUpdated?: boolean
+}
+
 export interface Review {
   pontuacaoGeral: number
   scores: { gancho: number; entrega: number; cta: number; adequacaoPublico: number; producao: number }
@@ -71,13 +78,14 @@ export interface Review {
   varianteAB: { gancho: string; driverPsicologico: string; hipoteseTestada: string; roteiro: string }
 }
 
-type Step = 'briefing' | 'hooks' | 'script' | 'review'
+type Step = 'briefing' | 'hooks' | 'script' | 'chat' | 'review'
 
 const STEPS: { id: Step; label: string; icon: string }[] = [
-  { id: 'briefing', label: 'Briefing', icon: '📋' },
-  { id: 'hooks', label: 'Gancho', icon: '🎯' },
-  { id: 'script', label: 'Roteiro', icon: '✍️' },
-  { id: 'review', label: 'Revisão', icon: '🔍' },
+  { id: 'briefing',     label: 'Briefing',     icon: '📋' },
+  { id: 'hooks',        label: 'Gancho',        icon: '🎯' },
+  { id: 'script',       label: 'Roteiro',       icon: '✍️' },
+  { id: 'chat',         label: 'Refinamento',   icon: '💬' },
+  { id: 'review',       label: 'Revisão',       icon: '🔍' },
 ]
 
 function MainApp() {
@@ -90,6 +98,8 @@ function MainApp() {
   const [review, setReview] = useState<Review | null>(null)
   const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null)
   const [currentScriptDbId, setCurrentScriptDbId] = useState<string | null>(null)
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([])
+  const [chatLoading, setChatLoading] = useState(false)
   const [loading, setLoading] = useState(false)
   const [loadingMsg, setLoadingMsg] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -138,6 +148,45 @@ function MainApp() {
       setError(e instanceof Error ? e.message : 'Erro desconhecido')
     } finally {
       setLoading(false)
+    }
+  }
+
+  function handleEnterChat() {
+    setChatHistory([])
+    setStep('chat')
+  }
+
+  async function handleChatMessage(message: string) {
+    const newHistory: ChatMessage[] = [...chatHistory, { role: 'user', content: message }]
+    setChatHistory(newHistory)
+    setError(null)
+    setChatLoading(true)
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          script,
+          brief: strategistBrief,
+          chosenHook,
+          formato: briefing?.formato,
+          userMessage: message,
+          conversationHistory: chatHistory,
+        }),
+      })
+      const json = await res.json()
+      if (!json.success) throw new Error(json.error)
+      const assistantMsg: ChatMessage = {
+        role: 'assistant',
+        content: json.reply,
+        scriptUpdated: !!json.updatedScript,
+      }
+      setChatHistory([...newHistory, assistantMsg])
+      if (json.updatedScript) setScript(json.updatedScript)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erro desconhecido')
+    } finally {
+      setChatLoading(false)
     }
   }
 
@@ -212,6 +261,7 @@ function MainApp() {
     setChosenHook(null)
     setScript(null)
     setReview(null)
+    setChatHistory([])
     setError(null)
     setSelectedHistoryId(null)
     setCurrentScriptDbId(null)
@@ -296,7 +346,26 @@ function MainApp() {
             <HookSelector brief={strategistBrief} onChoose={handleHookChosen} onBack={() => setStep('briefing')} />
           )}
           {step === 'script' && script && chosenHook && (
-            <ScriptViewer script={script} chosenHook={chosenHook} onApprove={handleApproveScript} onBack={() => setStep('hooks')} />
+            <ScriptViewer
+              script={script}
+              chosenHook={chosenHook}
+              onEnterChat={handleEnterChat}
+              onApprove={handleApproveScript}
+              onBack={() => setStep('hooks')}
+            />
+          )}
+          {step === 'chat' && script && chosenHook && strategistBrief && briefing && (
+            <ScriptChat
+              script={script}
+              chosenHook={chosenHook}
+              brief={strategistBrief}
+              formato={briefing.formato}
+              chatHistory={chatHistory}
+              loading={chatLoading}
+              onSendMessage={handleChatMessage}
+              onApprove={handleApproveScript}
+              onBack={() => setStep('script')}
+            />
           )}
           {step === 'review' && review && script && (
             <ReviewPanel review={review} script={script} scriptId={currentScriptDbId} onNewScript={handleReset} />
