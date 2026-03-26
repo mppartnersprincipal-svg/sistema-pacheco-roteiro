@@ -37,9 +37,10 @@ Você RECEBE um roteiro já criado e conversa com o usuário para refiná-lo. Po
 }`
 
 export async function POST(req: Request) {
-  const { script, brief, chosenHook, formato, userMessage, conversationHistory } = await req.json()
+  try {
+    const { script, brief, chosenHook, formato, userMessage, conversationHistory } = await req.json()
 
-  const contextBlock = `**Roteiro atual para edição:**
+    const contextBlock = `**Roteiro atual para edição:**
 ${JSON.stringify(script, null, 2)}
 
 **Contexto estratégico:**
@@ -48,30 +49,29 @@ ${JSON.stringify(script, null, 2)}
 - Gancho escolhido: "${chosenHook.texto}"
 - Formato: ${formato}`
 
-  // Monta as mensagens para a API
-  // A primeira mensagem sempre injeta o contexto do roteiro
-  const messages: { role: 'user' | 'assistant'; content: string }[] = []
+    // Monta as mensagens para a API
+    // A primeira mensagem sempre injeta o contexto do roteiro
+    const messages: { role: 'user' | 'assistant'; content: string }[] = []
 
-  if (conversationHistory.length === 0) {
-    // Primeira mensagem — injeta contexto + pergunta do usuário
-    messages.push({
-      role: 'user',
-      content: `${contextBlock}\n\n---\n\n${userMessage}`,
-    })
-  } else {
-    // Conversas subsequentes — reinjecta contexto atualizado na primeira mensagem
-    const [firstMsg, ...rest] = conversationHistory
-    messages.push({
-      role: 'user' as const,
-      content: `${contextBlock}\n\n---\n\n${firstMsg.content}`,
-    })
-    for (const msg of rest) {
-      messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content })
+    if (conversationHistory.length === 0) {
+      // Primeira mensagem — injeta contexto + pergunta do usuário
+      messages.push({
+        role: 'user',
+        content: `${contextBlock}\n\n---\n\n${userMessage}`,
+      })
+    } else {
+      // Conversas subsequentes — reinjecta contexto atualizado na primeira mensagem
+      const [firstMsg, ...rest] = conversationHistory
+      messages.push({
+        role: 'user' as const,
+        content: `${contextBlock}\n\n---\n\n${firstMsg.content}`,
+      })
+      for (const msg of rest) {
+        messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content })
+      }
+      messages.push({ role: 'user', content: userMessage })
     }
-    messages.push({ role: 'user', content: userMessage })
-  }
 
-  try {
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4000,
@@ -80,17 +80,27 @@ ${JSON.stringify(script, null, 2)}
     })
 
     const text = message.content[0].type === 'text' ? message.content[0].text : ''
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) throw new Error('JSON não encontrado na resposta')
-    const parsed = JSON.parse(jsonMatch[0])
+
+    // Extrai o JSON removendo possíveis blocos markdown (```json ... ```)
+    const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim()
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error(`JSON não encontrado na resposta. Resposta recebida: ${text.slice(0, 200)}`)
+
+    let parsed: { reply?: string; updatedScript?: unknown }
+    try {
+      parsed = JSON.parse(jsonMatch[0])
+    } catch {
+      throw new Error(`JSON inválido na resposta: ${jsonMatch[0].slice(0, 200)}`)
+    }
 
     return Response.json({
       success: true,
-      reply: parsed.reply,
-      updatedScript: parsed.updatedScript ?? null,
+      reply: parsed.reply ?? '',
+      updatedScript: parsed.updatedScript && parsed.updatedScript !== 'null' ? parsed.updatedScript : null,
     })
   } catch (error) {
     console.error('Chat editor error:', error)
-    return Response.json({ success: false, error: 'Erro ao processar mensagem' }, { status: 500 })
+    const msg = error instanceof Error ? error.message : 'Erro desconhecido'
+    return Response.json({ success: false, error: msg }, { status: 500 })
   }
 }
