@@ -43,16 +43,16 @@ export default function ReviewPanel({ review, script, scriptId, onNewScript }: P
   const [copiedAB, setCopiedAB] = useState(false)
   const [activeTab, setActiveTab] = useState<'review' | 'ab'>('review')
   const [downloading, setDownloading] = useState(false)
-  const [approved, setApproved] = useState(false)
-  const [approving, setApproving] = useState(false)
+  const [preApproved, setPreApproved] = useState(false)
+  const [preApproving, setPreApproving] = useState(false)
 
-  async function handleMarkApproved() {
-    if (!scriptId || approved) return
-    setApproving(true)
+  async function handlePreApprove() {
+    if (!scriptId || preApproved) return
+    setPreApproving(true)
     const supabase = createClient()
-    await supabase.from('scripts').update({ approved: true }).eq('id', scriptId)
-    setApproved(true)
-    setApproving(false)
+    await supabase.from('scripts').update({ approval_status: 'pre_approved' }).eq('id', scriptId)
+    setPreApproved(true)
+    setPreApproving(false)
   }
 
   async function handlePDF() {
@@ -185,15 +185,15 @@ export default function ReviewPanel({ review, script, scriptId, onNewScript }: P
 
       <div className="flex flex-col gap-3 pt-2">
         <button
-          onClick={handleMarkApproved}
-          disabled={!scriptId || approved || approving}
+          onClick={handlePreApprove}
+          disabled={!scriptId || preApproved || preApproving}
           className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all ${
-            approved
-              ? 'bg-green-700/30 border border-green-600/50 text-green-400 cursor-default'
-              : 'bg-green-600 hover:bg-green-500 text-white disabled:opacity-40 disabled:cursor-not-allowed'
+            preApproved
+              ? 'bg-blue-700/30 border border-blue-600/50 text-blue-400 cursor-default'
+              : 'bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40 disabled:cursor-not-allowed'
           }`}
         >
-          {approved ? '✓ Roteiro Aprovado' : approving ? 'Aprovando...' : '✓ Aprovar Roteiro'}
+          {preApproved ? '⏳ Adicionado aos Pré-Aprovados' : preApproving ? 'Salvando...' : '⏳ Pré-Aprovar Roteiro'}
         </button>
         <button onClick={onNewScript}
           className="w-full bg-solar-orange hover:bg-orange-500 text-white font-semibold py-3 rounded-xl text-sm transition-colors">
